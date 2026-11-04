@@ -1,0 +1,89 @@
+<div class="page-header">
+  <h1>La Orla</h1>
+  <a class="button" routerLink="/grades/new">Nuevo voto</a>
+</div>
+
+<div class="toolbar">
+  <select aria-label="Nota" [(ngModel)]="value" (ngModelChange)="loadPage(1)">
+    <option value="">A+ y F</option>
+    <option value="A+">Solo A+</option>
+    <option value="F">Solo F</option>
+  </select>
+
+  <select aria-label="Usuario" [(ngModel)]="user" (ngModelChange)="loadPage(1)">
+    <option value="">Todos los usuarios</option>
+    @for (option of users(); track option._id) {
+      <option [value]="option._id">{{ option.name }}</option>
+    }
+  </select>
+</div>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Cargando...</p>
+} @else if (!error() || grades().length > 0) {
+  <p class="muted count">{{ total() }} {{ total() === 1 ? 'voto' : 'votos' }}</p>
+
+  <div class="table-wrap">
+    <table class="stack">
+      <thead>
+        <tr>
+          <th>Quién vota</th>
+          <th>A quién</th>
+          <th>Nota</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (grade of grades(); track grade._id) {
+          <tr>
+            <td data-label="Quién vota">
+              <div class="person">
+                <app-avatar [name]="grade.from.name" [photo]="grade.from.photo" />
+                <span class="who">{{ grade.from.name }}<small>{{ grade.from.email }}</small></span>
+              </div>
+            </td>
+            <td data-label="A quién">
+              <div class="person">
+                <app-avatar [name]="grade.to.name" [photo]="grade.to.photo" />
+                <span class="who">{{ grade.to.name }}<small>{{ grade.to.email }}</small></span>
+              </div>
+            </td>
+            <td data-label="Nota">
+              <!-- class binding: verde para el A+ y rojo para el F -->
+              <span class="pill grade" [class.ok]="grade.value === 'A+'" [class.bad]="grade.value === 'F'">
+                {{ grade.value }}
+              </span>
+            </td>
+            <td data-label="Fecha">{{ grade.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td class="actions">
+              <button type="button" class="secondary" (click)="toggleValue(grade)">
+                Cambiar a {{ grade.value === 'A+' ? 'F' : 'A+' }}
+              </button>
+              <button type="button" class="danger" (click)="askDelete(grade)">Eliminar</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="empty" colspan="5">No hay votos con estos filtros</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="loadPage($event)" />
+}
+
+<app-confirm-modal
+  [open]="gradeToDelete() !== null"
+  title="Eliminar voto"
+  [message]="deleteMessage()"
+  confirmText="Eliminar"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

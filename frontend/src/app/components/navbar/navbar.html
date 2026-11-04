@@ -1,0 +1,33 @@
+<header class="navbar">
+  <a class="brand" routerLink="/">Stu<span>date</span></a>
+
+  <!-- Los Dates son para cualquier usuario con sesión -->
+  @if (auth.isLoggedIn()) {
+    <nav>
+      <a routerLink="/dates" routerLinkActive="active">Dates</a>
+    </nav>
+  }
+
+  <!-- La zona del backoffice solo la ve un admin. Ocultarla es comodidad, no seguridad:
+       si un user escribe la URL, adminGuard lo devuelve al inicio y la API responde 403 -->
+  @if (auth.isAdmin()) {
+    <span class="zone">Backoffice</span>
+    <!-- routerLinkActive le pone la clase "active" al enlace de la página en la que estoy -->
+    <nav>
+      <a routerLink="/users" routerLinkActive="active">Usuarios</a>
+      <a routerLink="/grades" routerLinkActive="active">La Orla</a>
+    </nav>
+  }
+
+  <div class="session">
+    @if (auth.user(); as user) {
+      <span class="user">{{ user.name }} ({{ user.role }})</span>
+      <button type="button" class="secondary" (click)="auth.logout()">Cerrar sesión</button>
+    } @else {
+      <nav>
+        <a routerLink="/login" routerLinkActive="active">Iniciar sesión</a>
+        <a routerLink="/register" routerLinkActive="active">Registrarse</a>
+      </nav>
+    }
+  </div>
+</header>

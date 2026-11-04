@@ -1,0 +1,47 @@
+<h1>Nuevo voto</h1>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  <label>
+    Quién vota *
+    <select formControlName="from">
+      <option value="" disabled>Elige un usuario</option>
+      @for (user of users(); track user._id) {
+        <option [value]="user._id">{{ user.name }}</option>
+      }
+    </select>
+  </label>
+
+  <label>
+    A quién *
+    <select formControlName="to">
+      <option value="" disabled>Elige un usuario</option>
+      @for (user of users(); track user._id) {
+        <option [value]="user._id">{{ user.name }}</option>
+      }
+    </select>
+    @if (form.hasError('sameUser')) {
+      <small class="field-error">Un usuario no se puede votar a sí mismo</small>
+    }
+  </label>
+
+  <label>
+    Nota
+    <select formControlName="value">
+      @for (value of values; track value) {
+        <option [value]="value">{{ value }}</option>
+      }
+    </select>
+    <small class="hint">Si los dos se han dado A+, se abre un Date entre ellos.</small>
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" [disabled]="form.invalid || saving()">
+      {{ saving() ? 'Guardando...' : 'Guardar voto' }}
+    </button>
+    <a routerLink="/grades">Cancelar</a>
+  </div>
+</form>

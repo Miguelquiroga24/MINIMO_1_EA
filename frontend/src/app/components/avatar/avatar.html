@@ -1,0 +1,7 @@
+@if (photo()) {
+  <img class="avatar" [class.lg]="size() === 'lg'" [src]="photo()" [alt]="'Foto de ' + name()" />
+} @else {
+  <span class="avatar" [class.lg]="size() === 'lg'" [style.background]="color()" aria-hidden="true">
+    {{ initials() }}
+  </span>
+}

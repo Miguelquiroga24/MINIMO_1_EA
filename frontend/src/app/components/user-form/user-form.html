@@ -1,0 +1,130 @@
+<h1>{{ id() ? 'Editar usuario' : 'Nuevo usuario' }}</h1>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Cargando...</p>
+} @else if (loadFailed()) {
+  <a routerLink="/users">Volver a la lista de usuarios</a>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <!-- La foto: se enseña ya recortada en el círculo antes de guardar -->
+    <div class="photo-field">
+      <app-avatar [name]="form.controls.name.value || '?'" [photo]="photo()" size="lg" />
+      <div class="photo-controls">
+        <label>
+          Foto de perfil
+          <input type="file" accept="image/png, image/jpeg" (change)="onPhotoSelected($event)" />
+        </label>
+        <small class="hint">PNG o JPG. Se recorta en un círculo.</small>
+        @if (photo()) {
+          <button type="button" class="secondary" (click)="removePhoto()">Quitar foto</button>
+        }
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        Nombre *
+        <input type="text" formControlName="name" />
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="field-error">El nombre es obligatorio</small>
+        }
+      </label>
+
+      <label>
+        Email *
+        <input type="email" formControlName="email" />
+        @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+          <small class="field-error">El email es obligatorio</small>
+        } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+          <small class="field-error">El email no tiene un formato válido</small>
+        }
+      </label>
+    </div>
+
+    <!-- La contraseña solo al crear: desde el backoffice no se cambia la de nadie -->
+    @if (!id()) {
+      <div class="form-grid">
+        <label>
+          Contraseña *
+          <input type="password" formControlName="password" autocomplete="new-password" />
+          @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+            <small class="field-error">La contraseña es obligatoria</small>
+          } @else if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+            <small class="field-error">Tiene que tener 8 caracteres como mínimo</small>
+          }
+        </label>
+
+        <label>
+          Repetir contraseña *
+          <input type="password" formControlName="confirmPassword" autocomplete="new-password" />
+          @if (form.controls.confirmPassword.touched && form.hasError('passwordMismatch')) {
+            <small class="field-error">Las contraseñas no coinciden</small>
+          }
+        </label>
+      </div>
+    }
+
+    <div class="form-grid">
+      <label>
+        Rol
+        <select formControlName="role">
+          <option value="user">user</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+
+      <label>
+        Titulación
+        <select formControlName="degree">
+          <option value="">Sin titulación</option>
+          @for (option of degrees; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="active" />
+      Activo
+      <small class="hint">Un usuario inactivo no puede iniciar sesión ni usar la API</small>
+    </label>
+
+    @if (isOwnUser()) {
+      <p class="lock">Es tu propio usuario: no puedes cambiarte el rol ni desactivarte.</p>
+    }
+
+    <div class="form-grid">
+      <label>
+        Fecha de nacimiento
+        <input type="date" formControlName="birthDate" />
+      </label>
+
+      <label>
+        Qué busco
+        <input type="text" formControlName="lookingFor" placeholder="Alguien con quien estudiar" />
+        @if (form.controls.lookingFor.invalid) {
+          <small class="field-error">Como mucho 100 caracteres</small>
+        }
+      </label>
+    </div>
+
+    <label>
+      Bio
+      <textarea rows="3" formControlName="bio"></textarea>
+      <small class="hint">{{ form.controls.bio.value.length }} / 500</small>
+    </label>
+
+    <div class="form-actions">
+      <!-- Property binding: el botón se desactiva si el formulario no es válido o se está guardando -->
+      <button type="submit" [disabled]="form.invalid || saving()">
+        {{ saving() ? 'Guardando...' : 'Guardar' }}
+      </button>
+      <a routerLink="/users">Cancelar</a>
+    </div>
+  </form>
+}

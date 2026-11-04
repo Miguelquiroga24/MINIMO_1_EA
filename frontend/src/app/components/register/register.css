@@ -1,0 +1,5 @@
+/* Así los avisos miden lo mismo que el formulario */
+:host {
+  display: block;
+  max-width: 420px;
+}

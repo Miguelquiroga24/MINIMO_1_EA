@@ -1,0 +1,20 @@
+/* object-fit: cover recorta la foto para que llene el círculo sin deformarse */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--head);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.avatar.lg {
+  width: 88px;
+  height: 88px;
+  font-size: 1.6rem;
+}

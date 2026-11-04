@@ -1,0 +1,134 @@
+<div class="page-header">
+  <h1>{{ archived() ? 'Usuarios archivados' : 'Usuarios' }}</h1>
+  @if (!archived()) {
+    <a class="button" routerLink="/users/new">Nuevo usuario</a>
+  }
+</div>
+
+<!-- Cada filtro llama a loadPage(1) al cambiar: la API devuelve la primera página ya filtrada -->
+<div class="toolbar">
+  <input
+    class="search"
+    type="search"
+    placeholder="Buscar por nombre o email"
+    aria-label="Buscar usuarios"
+    [(ngModel)]="search"
+    (ngModelChange)="loadPage(1)"
+  />
+
+  <select aria-label="Rol" [(ngModel)]="role" (ngModelChange)="loadPage(1)">
+    <option value="">Todos los roles</option>
+    <option value="admin">admin</option>
+    <option value="user">user</option>
+  </select>
+
+  <select aria-label="Estado" [(ngModel)]="active" (ngModelChange)="loadPage(1)">
+    <option value="">Activos e inactivos</option>
+    <option value="true">Solo activos</option>
+    <option value="false">Solo inactivos</option>
+  </select>
+
+  <select aria-label="Titulación" [(ngModel)]="degree" (ngModelChange)="loadPage(1)">
+    <option value="">Todas las titulaciones</option>
+    @for (option of degrees; track option) {
+      <option [value]="option">{{ option }}</option>
+    }
+  </select>
+
+  <label class="checkbox switch">
+    <input type="checkbox" [(ngModel)]="archived" (ngModelChange)="loadPage(1)" />
+    Ver archivados
+  </label>
+</div>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Cargando...</p>
+} @else if (!error() || users().length > 0) {
+  <p class="muted count">{{ total() }} {{ total() === 1 ? 'usuario' : 'usuarios' }} · 10 por página</p>
+
+  <div class="table-wrap">
+    <table class="stack">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Titulación</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user._id) {
+          <!-- class binding: la fila sale en gris si el usuario está inactivo -->
+          <tr [class.inactive]="!user.active">
+            <td data-label="Usuario">
+              <div class="person">
+                <app-avatar [name]="user.name" [photo]="user.photo" />
+                <span class="who">
+                  {{ user.name }}
+                  <small>{{ user.email }}</small>
+                </span>
+              </div>
+            </td>
+            <td data-label="Titulación">
+              @if (user.degree) {
+                {{ user.degree }}
+              } @else {
+                <span class="muted">-</span>
+              }
+            </td>
+            <td data-label="Rol"><span class="pill" [class.admin]="user.role === 'admin'">{{ user.role }}</span></td>
+            <td data-label="Estado">
+              @if (user.deleted) {
+                <span class="pill warn">Archivado</span>
+              } @else if (user.active) {
+                <span class="pill ok">Activo</span>
+              } @else {
+                <span class="pill off">Inactivo</span>
+              }
+            </td>
+            <td class="actions">
+              @if (!user.deleted) {
+                <button type="button" class="secondary" [routerLink]="['/users', user._id, 'edit']">
+                  Editar
+                </button>
+                @if (!isMe(user)) {
+                  <button type="button" class="danger" (click)="askArchive(user)">Archivar</button>
+                }
+              } @else {
+                <!-- Un usuario archivado no se edita: primero se restaura (o se elimina para siempre) -->
+                <button type="button" class="secondary" (click)="restore(user)">Restaurar</button>
+                <button type="button" class="danger" (click)="askDelete(user)">Eliminar para siempre</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="empty" colspan="5">
+              @if (search()) {
+                No hay resultados para "{{ search() }}"
+              } @else {
+                No hay usuarios con estos filtros
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="loadPage($event)" />
+}
+
+<app-confirm-modal
+  [open]="pending() !== null"
+  [title]="modalTitle()"
+  [message]="modalMessage()"
+  [confirmText]="modalConfirmText()"
+  (confirmed)="confirmAction()"
+  (cancelled)="cancelAction()"
+/>

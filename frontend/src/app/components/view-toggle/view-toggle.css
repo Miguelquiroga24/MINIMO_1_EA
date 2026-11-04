@@ -1,0 +1,28 @@
+.view-toggle {
+  display: inline-flex;
+}
+
+.view-toggle button {
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--primary);
+}
+
+.view-toggle button:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.view-toggle button:last-child {
+  border-left: none;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.view-toggle button:hover:not(.active) {
+  background: #eef0fb;
+}
+
+/* El botón del modo que está elegido */
+.view-toggle button.active {
+  background: var(--primary);
+  color: #fff;
+}

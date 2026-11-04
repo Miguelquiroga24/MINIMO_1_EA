@@ -1,0 +1,18 @@
+<div class="view-toggle" role="group" aria-label="Modo de vista">
+  <button
+    type="button"
+    [class.active]="mode() === 'list'"
+    [attr.aria-pressed]="mode() === 'list'"
+    (click)="mode.set('list')"
+  >
+    Lista
+  </button>
+  <button
+    type="button"
+    [class.active]="mode() === 'cards'"
+    [attr.aria-pressed]="mode() === 'cards'"
+    (click)="mode.set('cards')"
+  >
+    Tarjetas
+  </button>
+</div>

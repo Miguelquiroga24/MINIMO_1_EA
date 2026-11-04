@@ -1,0 +1,21 @@
+<div class="pagination">
+  <button
+    type="button"
+    class="secondary"
+    [disabled]="page() <= 1"
+    (click)="pageChange.emit(page() - 1)"
+  >
+    Anterior
+  </button>
+
+  <span>Página {{ page() }} de {{ totalPages() }}</span>
+
+  <button
+    type="button"
+    class="secondary"
+    [disabled]="page() >= totalPages()"
+    (click)="pageChange.emit(page() + 1)"
+  >
+    Siguiente
+  </button>
+</div>

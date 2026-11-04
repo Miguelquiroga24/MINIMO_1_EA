@@ -1,0 +1,54 @@
+<h1>Crear una cuenta</h1>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="register()">
+  <label>
+    Nombre
+    <input type="text" formControlName="name" autocomplete="name" />
+    @if (form.controls.name.touched && form.controls.name.invalid) {
+      <small class="field-error">El nombre es obligatorio</small>
+    }
+  </label>
+
+  <label>
+    Email
+    <input type="email" formControlName="email" autocomplete="username" />
+    @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+      <small class="field-error">El email es obligatorio</small>
+    } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+      <small class="field-error">El email no tiene un formato válido</small>
+    }
+  </label>
+
+  <label>
+    Contraseña
+    <input type="password" formControlName="password" autocomplete="new-password" />
+    @if (form.controls.password.touched && form.controls.password.hasError('required')) {
+      <small class="field-error">La contraseña es obligatoria</small>
+    } @else if (form.controls.password.touched && form.controls.password.hasError('minlength')) {
+      <small class="field-error">Tiene que tener 8 caracteres como mínimo</small>
+    }
+  </label>
+
+  <label>
+    Repetir contraseña
+    <input type="password" formControlName="confirmPassword" autocomplete="new-password" />
+    @if (
+      form.controls.confirmPassword.touched && form.controls.confirmPassword.hasError('required')
+    ) {
+      <small class="field-error">Tienes que repetir la contraseña</small>
+    } @else if (form.controls.confirmPassword.touched && form.hasError('passwordMismatch')) {
+      <small class="field-error">Las contraseñas no coinciden</small>
+    }
+  </label>
+
+  <div class="form-actions">
+    <button type="submit" [disabled]="form.invalid || saving()">
+      {{ saving() ? 'Creando...' : 'Crear cuenta' }}
+    </button>
+    <a routerLink="/login">Ya tengo cuenta</a>
+  </div>
+</form>

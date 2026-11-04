@@ -1,0 +1,130 @@
+<div class="page-header">
+  <h1>{{ isAdmin() ? 'Dates' : 'Mis Dates' }}</h1>
+  <a class="button" routerLink="/dates/new">Nuevo Date</a>
+</div>
+
+<!-- Las bandejas del blog, como pestañas -->
+<div class="tabs" role="group" aria-label="Bandejas">
+  @for (tab of tabs; track tab.label) {
+    <button type="button" [class.active]="status() === tab.status" (click)="selectTab(tab.status)">
+      {{ tab.label }}
+    </button>
+  }
+</div>
+
+@if (isAdmin()) {
+  <div class="toolbar">
+    <select aria-label="Usuario" [(ngModel)]="user" (ngModelChange)="loadPage(1)">
+      <option value="">Todos los usuarios</option>
+      @for (option of users(); track option._id) {
+        <option [value]="option._id">{{ option.name }}</option>
+      }
+    </select>
+    <span class="muted hint">En negrita, a quien el sorteo le ha dado el primer mensaje.</span>
+  </div>
+}
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Cargando...</p>
+} @else if (!error() || dates().length > 0) {
+  <div class="table-wrap">
+    <table class="stack">
+      <thead>
+        <tr>
+          @if (isAdmin()) {
+            <th>Pareja</th>
+          } @else {
+            <th>Con</th>
+            <th>Empieza</th>
+          }
+          <th>Estado</th>
+          <th>Caduca</th>
+          <th>Prórroga</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (date of dates(); track date._id) {
+          <tr>
+            @if (isAdmin()) {
+              <td data-label="Pareja">
+                <div class="couple">
+                  @for (person of date.users; track person._id) {
+                    <div class="person">
+                      <app-avatar [name]="person.name" [photo]="person.photo" />
+                      <span class="who">
+                        <span [class.first]="person._id === date.firstTurn">{{ person.name }}</span>
+                        <small>{{ person.email }}</small>
+                      </span>
+                    </div>
+                  }
+                </div>
+              </td>
+            } @else {
+              <td data-label="Con">
+                <div class="person">
+                  <app-avatar [name]="other(date).name" [photo]="other(date).photo" />
+                  <span class="who">{{ other(date).name }}</span>
+                </div>
+              </td>
+              <td data-label="Empieza">
+                <span [class.first]="date.firstTurn === myId()">{{ firstTurnName(date) }}</span>
+              </td>
+            }
+            <td data-label="Estado">
+              <select
+                aria-label="Estado"
+                [ngModel]="date.status"
+                (ngModelChange)="changeStatus(date, $event)"
+              >
+                @for (option of statuses; track option) {
+                  <option [value]="option">{{ statusLabels[option] }}</option>
+                }
+              </select>
+            </td>
+            <td data-label="Caduca">
+              {{ date.expiresAt | date: 'dd/MM HH:mm' }}
+              @if (isExpired(date)) {
+                <span class="pill off">caducado</span>
+              }
+            </td>
+            <td data-label="Prórroga">
+              @if (date.extended) {
+                <span class="pill admin">usada</span>
+              } @else {
+                <span class="muted">disponible</span>
+              }
+            </td>
+            <td class="actions">
+              <button type="button" class="secondary" [disabled]="date.extended" (click)="extend(date)">
+                Prórroga +24 h
+              </button>
+              @if (isAdmin()) {
+                <button type="button" class="danger" (click)="askDelete(date)">Eliminar</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="empty" [attr.colspan]="isAdmin() ? 5 : 6">No hay Dates en esta bandeja</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="loadPage($event)" />
+}
+
+<app-confirm-modal
+  [open]="dateToDelete() !== null"
+  title="Eliminar Date"
+  [message]="deleteMessage()"
+  confirmText="Eliminar"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

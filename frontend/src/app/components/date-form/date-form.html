@@ -1,0 +1,41 @@
+<h1>Nuevo Date</h1>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="save()">
+  @if (isAdmin()) {
+    <label>
+      Usuario *
+      <select formControlName="userA">
+        <option value="" disabled>Elige un usuario</option>
+        @for (user of users(); track user._id) {
+          <option [value]="user._id">{{ user.name }}</option>
+        }
+      </select>
+    </label>
+  }
+
+  <label>
+    {{ isAdmin() ? 'Con *' : 'Con quién *' }}
+    <select formControlName="userB">
+      <option value="" disabled>Elige a alguien</option>
+      @for (user of users(); track user._id) {
+        <option [value]="user._id">{{ user.name }}{{ user.degree ? ' · ' + user.degree : '' }}</option>
+      }
+    </select>
+    @if (form.hasError('sameUser')) {
+      <small class="field-error">Elige dos usuarios distintos</small>
+    }
+  </label>
+
+  <p class="hint">Se sortea quién escribe primero y el Date caduca en 24 horas (con una prórroga).</p>
+
+  <div class="form-actions">
+    <button type="submit" [disabled]="form.invalid || saving()">
+      {{ saving() ? 'Abriendo...' : 'Abrir Date' }}
+    </button>
+    <a routerLink="/dates">Cancelar</a>
+  </div>
+</form>

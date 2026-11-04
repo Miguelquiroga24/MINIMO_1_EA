@@ -1,0 +1,55 @@
+/* Pestañas de las bandejas: la activa, subrayada */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs button {
+  border: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.tabs button:hover:not(:disabled) {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.tabs button.active {
+  box-shadow: inset 0 -3px 0 var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.toolbar {
+  justify-content: flex-start;
+}
+
+.toolbar select {
+  max-width: 100%;
+}
+
+.hint {
+  font-size: 0.85rem;
+}
+
+/* Los dos usuarios de un Date, uno encima del otro */
+.couple {
+  display: grid;
+  gap: 0.4rem;
+}
+
+/* A quien le toca escribir primero */
+.first {
+  font-weight: 700;
+}
+
+@media (max-width: 680px) {
+  .toolbar select {
+    width: 100%;
+  }
+}

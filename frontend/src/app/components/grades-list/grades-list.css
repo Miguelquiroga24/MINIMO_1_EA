@@ -1,0 +1,29 @@
+.count {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+}
+
+.toolbar {
+  justify-content: flex-start;
+}
+
+.toolbar select {
+  max-width: 100%;
+}
+
+
+/* La nota se ve un poco más grande que las demás pastillas */
+.pill.grade {
+  font-size: 0.85rem;
+}
+
+.pill.bad {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+@media (max-width: 680px) {
+  .toolbar select {
+    width: 100%;
+  }
+}
