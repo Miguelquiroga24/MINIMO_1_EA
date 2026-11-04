@@ -1,0 +1,22 @@
+# Dependencias (se instalan con npm install)
+node_modules/
+
+# Código compilado (lo genera npm run build)
+build/
+
+# Variables de entorno: cada uno tiene su propio .env, copiado de .env.example
+.env
+
+# Logs y cachés
+npm-debug.log*
+.npm
+.eslintcache
+*.tsbuildinfo
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+*.canvas
+*.py
+.obsidian
