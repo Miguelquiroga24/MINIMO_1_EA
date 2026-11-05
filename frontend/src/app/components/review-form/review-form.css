@@ -1,0 +1,80 @@
+/* Así el aviso de error mide lo mismo que el formulario */
+:host {
+  display: block;
+  max-width: 640px;
+}
+
+fieldset {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+}
+
+/* Una fila por criterio: el nombre, las cinco notas y si cumplió */
+.criterion {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Un criterio sin marcar se ve apagado (no se envía) */
+.criterion.off .scores,
+.criterion.off .checkbox:last-child {
+  opacity: 0.4;
+}
+
+.scores {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.score {
+  position: relative;
+  cursor: pointer;
+}
+
+.score input {
+  position: absolute;
+  opacity: 0;
+}
+
+.score span {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.score input:checked + span {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.score input:focus-visible + span {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 680px) {
+  .criterion {
+    grid-template-columns: 1fr;
+    gap: 0.4rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+}

@@ -1,0 +1,66 @@
+<h1>{{ id() ? 'Editar valoración' : 'Valorar el Date' }}</h1>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Cargando...</p>
+} @else if (loadFailed()) {
+  <a routerLink="/dates">Volver a los Dates</a>
+} @else {
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <!-- El vector de criterios: cada fila es un subdocumento (criterio, nota y si cumplió) -->
+    <fieldset formArrayName="criteria">
+      <legend>Criterios <small class="hint">puntúa al menos uno, de 1 a 5, y marca si cumplió lo que esperabas</small></legend>
+
+      @for (row of criteriaRows; track row.controls.criterion.value; let i = $index) {
+        <div class="criterion" [formGroupName]="i" [class.off]="!row.controls.included.value">
+          <label class="checkbox">
+            <input type="checkbox" formControlName="included" />
+            {{ labels[row.controls.criterion.value] }}
+          </label>
+
+          <div class="scores" role="radiogroup" [attr.aria-label]="'Nota de ' + labels[row.controls.criterion.value]">
+            @for (score of scores; track score) {
+              <label class="score">
+                <input type="radio" formControlName="score" [value]="score" />
+                <span>{{ score }}</span>
+              </label>
+            }
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" formControlName="met" />
+            Cumplió
+          </label>
+        </div>
+      }
+
+      @if (form.controls.criteria.hasError('noCriteria')) {
+        <small class="field-error">Marca al menos un criterio</small>
+      }
+    </fieldset>
+
+    <label>
+      Comentario
+      <textarea rows="3" formControlName="comment" placeholder="Qué tal fue el Date"></textarea>
+      <small class="hint">{{ form.controls.comment.value.length }} / 500</small>
+      @if (form.controls.comment.invalid) {
+        <small class="field-error">Como mucho 500 caracteres</small>
+      }
+    </label>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="wouldRepeat" />
+      Repetiría
+    </label>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="form.invalid || saving()">
+        {{ saving() ? 'Guardando...' : 'Guardar' }}
+      </button>
+      <a routerLink="/dates">Cancelar</a>
+    </div>
+  </form>
+}

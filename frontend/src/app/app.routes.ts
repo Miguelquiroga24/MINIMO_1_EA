@@ -6,6 +6,7 @@ import { GradeForm } from './components/grade-form/grade-form';
 import { GradesList } from './components/grades-list/grades-list';
 import { Login } from './components/login/login';
 import { Register } from './components/register/register';
+import { ReviewForm } from './components/review-form/review-form';
 import { UserForm } from './components/user-form/user-form';
 import { UsersList } from './components/users-list/users-list';
 import { adminGuard, authGuard, guestGuard } from './guards/auth.guard';
@@ -23,6 +24,20 @@ export const routes: Routes = [
   // Dates: cualquier usuario con sesión (cada uno ve los suyos; el admin, todos)
   { path: 'dates', component: DatesList, canActivate: [authGuard], title: 'Dates' },
   { path: 'dates/new', component: DateForm, canActivate: [authGuard], title: 'Nuevo Date' },
+
+  // Valoraciones de los Dates: con sesión. Quién puede valorar o editar lo comprueba la API (403/409)
+  {
+    path: 'dates/:dateId/reviews/new',
+    component: ReviewForm,
+    canActivate: [authGuard],
+    title: 'Valorar Date',
+  },
+  {
+    path: 'reviews/:id/edit',
+    component: ReviewForm,
+    canActivate: [authGuard],
+    title: 'Editar valoración',
+  },
 
   // Backoffice: solo admin
   { path: 'users', component: UsersList, canActivate: [authGuard, adminGuard], title: 'Usuarios' },
