@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.head h3 {
+  margin: 0;
+}
+
+.toolbar {
+  justify-content: flex-start;
+}
+
+.list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.review {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.review header,
+.review footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.average {
+  color: var(--primary);
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.average small {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+/* Un chip por criterio: verde si cumplió lo esperado */
+.criteria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.criteria li {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #eceef3;
+  font-size: 0.85rem;
+}
+
+.criteria li.met {
+  background: var(--ok-light);
+  color: var(--ok);
+}
+
+.comment {
+  margin: 0;
+  font-style: italic;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.empty {
+  margin: 0;
+}
+
+@media (max-width: 680px) {
+  .toolbar select,
+  .toolbar .search {
+    width: 100%;
+  }
+}

@@ -1,0 +1,40 @@
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+} @else if (loading()) {
+  <p class="muted">Calculando el resumen...</p>
+} @else if (stats(); as stats) {
+  @if (stats.total === 0) {
+    <p class="muted">Este Date todavía no tiene valoraciones.</p>
+  } @else {
+    <div class="summary">
+      <div class="figure">
+        <strong>{{ stats.average | number: '1.0-2' }}</strong>
+        <span>media / 5</span>
+      </div>
+      <div class="figure">
+        <strong>{{ stats.total }}</strong>
+        <span>{{ stats.total === 1 ? 'valoración' : 'valoraciones' }}</span>
+      </div>
+      <div class="figure">
+        <strong>{{ stats.min | number: '1.0-2' }} – {{ stats.max | number: '1.0-2' }}</strong>
+        <span>la más baja y la más alta</span>
+      </div>
+      <div class="figure">
+        <strong>{{ stats.wouldRepeat }} / {{ stats.total }}</strong>
+        <span>repetirían</span>
+      </div>
+    </div>
+
+    <!-- Una barra por criterio: la media de todas las valoraciones que lo han puntuado -->
+    <ul class="bars">
+      @for (item of stats.criteria; track item.criterion) {
+        <li>
+          <span class="name">{{ labels[item.criterion] }}</span>
+          <span class="track"><span class="fill" [style.width]="barWidth(item.average)"></span></span>
+          <span class="value">{{ item.average | number: '1.0-2' }}</span>
+          <small class="muted">cumplió {{ item.met }} de {{ item.count }}</small>
+        </li>
+      }
+    </ul>
+  }
+}

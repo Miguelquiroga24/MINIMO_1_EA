@@ -1,0 +1,79 @@
+:host {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* Las cifras generales, en tarjetas pequeñas */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.figure {
+  display: grid;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+
+.figure strong {
+  color: var(--primary);
+  font-size: 1.4rem;
+}
+
+.figure span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* Barras por criterio */
+.bars {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bars li {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--primary-light);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.value {
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bars li {
+    grid-template-columns: 90px 1fr 40px;
+  }
+
+  .bars small {
+    grid-column: 1 / -1;
+  }
+}

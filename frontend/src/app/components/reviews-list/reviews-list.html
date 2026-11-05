@@ -1,0 +1,98 @@
+<div class="head">
+  <h3>Valoraciones</h3>
+  @if (canReview()) {
+    <a class="button" [routerLink]="['/dates', date()._id, 'reviews', 'new']">Valorar este Date</a>
+  }
+</div>
+
+<!-- Los dos filtros se combinan con el del Date en la misma petición: GET /reviews?date=&search=&minScore= -->
+<div class="toolbar">
+  <input
+    class="search"
+    type="search"
+    placeholder="Buscar en el comentario"
+    aria-label="Buscar valoraciones"
+    [(ngModel)]="search"
+    (ngModelChange)="loadPage(1)"
+  />
+  <select aria-label="Media mínima" [(ngModel)]="minScore" (ngModelChange)="loadPage(1)">
+    <option value="">Cualquier nota</option>
+    @for (option of scoreOptions; track option) {
+      <option [ngValue]="option">{{ option }} o más</option>
+    }
+  </select>
+</div>
+
+@if (error()) {
+  <p class="alert">{{ error() }}</p>
+}
+
+@if (loading()) {
+  <p class="muted">Cargando...</p>
+} @else {
+  <div class="list">
+    @for (review of reviews(); track review._id) {
+      <article class="review">
+        <header>
+          <div class="person">
+            <app-avatar [name]="review.author.name" [photo]="review.author.photo" />
+            <span class="who">
+              {{ review.author.name }}
+              <small>{{ review.createdAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+            </span>
+          </div>
+          <span class="average">{{ review.average | number: '1.0-2' }} <small>/ 5</small></span>
+        </header>
+
+        <!-- El vector de subdocumentos: un chip por criterio -->
+        <ul class="criteria">
+          @for (item of review.criteria; track item.criterion) {
+            <li [class.met]="item.met">
+              {{ labels[item.criterion] }} <b>{{ item.score }}</b>
+              <span>{{ item.met ? '✓' : '✗' }}</span>
+            </li>
+          }
+        </ul>
+
+        @if (review.comment) {
+          <p class="comment">{{ review.comment }}</p>
+        }
+
+        <footer>
+          <span class="pill" [class.ok]="review.wouldRepeat">
+            {{ review.wouldRepeat ? 'Repetiría' : 'No repetiría' }}
+          </span>
+          @if (canManage(review)) {
+            <span class="actions">
+              <button type="button" class="secondary" [routerLink]="['/reviews', review._id, 'edit']">
+                Editar
+              </button>
+              <button type="button" class="danger" (click)="askDelete(review)">Eliminar</button>
+            </span>
+          }
+        </footer>
+      </article>
+    } @empty {
+      <p class="muted empty">
+        @if (search() || minScore() !== '') {
+          No hay valoraciones con estos filtros
+        } @else {
+          Todavía no hay valoraciones
+        }
+      </p>
+    }
+  </div>
+
+  @if (totalPages() > 1) {
+    <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="loadPage($event)" />
+  }
+}
+
+<app-confirm-modal
+  [open]="reviewToDelete() !== null"
+  title="¿Eliminar la valoración?"
+  [message]="deleteMessage()"
+  confirmText="Eliminar"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

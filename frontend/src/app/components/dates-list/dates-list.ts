@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -14,6 +14,8 @@ import { apiErrorMessage } from '../../utils/api-error';
 import { Avatar } from '../avatar/avatar';
 import { ConfirmModal } from '../confirm-modal/confirm-modal';
 import { Pagination } from '../pagination/pagination';
+import { ReviewStats } from '../review-stats/review-stats';
+import { ReviewsList } from '../reviews-list/reviews-list';
 
 const PAGE_SIZE = 10;
 
@@ -29,7 +31,7 @@ const TABS: { status: DateFilters['status']; label: string }[] = [
 // filtrar por usuario y eliminar); un usuario normal ve solo los suyos. Quién ve qué lo decide la API
 @Component({
   selector: 'app-dates-list',
-  imports: [FormsModule, RouterLink, DatePipe, Avatar, ConfirmModal, Pagination],
+  imports: [FormsModule, RouterLink, DatePipe, Avatar, ConfirmModal, Pagination, ReviewStats, ReviewsList],
   templateUrl: './dates-list.html',
   styleUrl: './dates-list.css',
 })
@@ -61,6 +63,15 @@ export class DatesList implements OnInit {
   users = signal<User[]>([]);
 
   dateToDelete = signal<StudateDate | null>(null);
+
+  // ?reviews=<id> en la URL: al volver del formulario de valoración se abren las de ese Date
+  reviews = input<string>();
+
+  // El Date del que se enseñan las valoraciones (null: ninguno)
+  selected = signal<StudateDate | null>(null);
+
+  // Al borrar una valoración se incrementa, y el resumen se vuelve a pedir
+  reviewsVersion = signal(0);
 
   deleteMessage = computed(() => {
     const date = this.dateToDelete();
@@ -95,6 +106,14 @@ export class DatesList implements OnInit {
   ngOnInit(): void {
     this.loadPage(1);
 
+    const reviewsOf = this.reviews();
+    if (reviewsOf) {
+      this.dateService.getDate(reviewsOf).subscribe({
+        next: (response) => this.selected.set(response.date),
+        error: (err: HttpErrorResponse) => this.error.set(apiErrorMessage(err)),
+      });
+    }
+
     if (this.isAdmin()) {
       this.userService
         .getUsers(1, 100, { search: '', role: 'user', active: '', degree: '', archived: false })
@@ -126,6 +145,11 @@ export class DatesList implements OnInit {
     return new Date(date.expiresAt).getTime() < Date.now();
   }
 
+  // Abre o cierra las valoraciones de un Date (debajo de la tabla)
+  toggleReviews(date: StudateDate): void {
+    this.selected.set(this.selected()?._id === date._id ? null : date);
+  }
+
   changeStatus(date: StudateDate, status: DateStatus): void {
     this.run(this.dateService.updateStatus(date._id, status));
   }
@@ -149,6 +173,12 @@ export class DatesList implements OnInit {
     }
 
     this.dateToDelete.set(null);
+
+    // Si tenía las valoraciones abiertas, se cierran (la API también borra sus valoraciones)
+    if (this.selected()?._id === date._id) {
+      this.selected.set(null);
+    }
+
     this.run(this.dateService.deleteDate(date._id));
   }
 
@@ -156,7 +186,14 @@ export class DatesList implements OnInit {
   private run(request: Observable<unknown>): void {
     this.error.set('');
     request.subscribe({
-      next: () => {
+      next: (response) => {
+        // Si ha cambiado el Date que tiene las valoraciones abiertas (su estado o la prórroga), las
+        // valoraciones se quedan con el Date nuevo: así el botón de valorar sabe si sigue pendiente
+        const updated = (response as { date?: StudateDate } | null)?.date;
+        if (updated && updated._id === this.selected()?._id) {
+          this.selected.set(updated);
+        }
+
         const isLastOnPage = this.dates().length === 1 && this.page() > 1;
         this.loadPage(isLastOnPage ? this.page() - 1 : this.page());
       },

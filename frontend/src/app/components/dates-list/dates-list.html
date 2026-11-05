@@ -100,6 +100,14 @@
               }
             </td>
             <td class="actions">
+              <button
+                type="button"
+                class="secondary"
+                [class.on]="selected()?._id === date._id"
+                (click)="toggleReviews(date)"
+              >
+                Valoraciones
+              </button>
               <button type="button" class="secondary" [disabled]="date.extended" (click)="extend(date)">
                 Prórroga +24 h
               </button>
@@ -118,6 +126,18 @@
   </div>
 
   <app-pagination [page]="page()" [totalPages]="totalPages()" (pageChange)="loadPage($event)" />
+}
+
+<!-- Las valoraciones del Date elegido: el resumen estadístico y el listado (dos componentes) -->
+@if (selected(); as date) {
+  <section class="reviews-panel">
+    <div class="panel-head">
+      <h2>{{ date.users[0].name }} y {{ date.users[1].name }}</h2>
+      <button type="button" class="secondary" (click)="selected.set(null)">Cerrar</button>
+    </div>
+    <app-review-stats [dateId]="date._id" [refresh]="reviewsVersion()" />
+    <app-reviews-list [date]="date" (changed)="reviewsVersion.update((v) => v + 1)" />
+  </section>
 }
 
 <app-confirm-modal
