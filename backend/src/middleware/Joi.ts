@@ -4,6 +4,7 @@ import { NextFunction, Request, Response } from 'express';
 
 import { DATE_STATUSES, DateStatus } from '../models/Date';
 import { GRADE_VALUES, GradeValue, IGrade } from '../models/Grade';
+import { REVIEW_CRITERIA, SCORE_MAX, SCORE_MIN } from '../models/Review';
 import { IUser, PHOTO_MAX_LENGTH, USER_ROLES, UserRole } from '../models/User';
 
 export interface PaginationQuery {
@@ -35,6 +36,15 @@ export interface GradeListQuery {
     limit: number;
     value?: GradeValue;
     user?: string;
+}
+
+// Los filtros del listado de valoraciones: la paginacion, el texto del comentario, un Date y la nota minima
+export interface ReviewListQuery {
+    page: number;
+    limit: number;
+    search: string;
+    date?: string;
+    minScore?: number;
 }
 
 // Funcion que se encarga de validar los datos que llegan en una petición
@@ -96,6 +106,25 @@ const userProfile = {
     // La foto: una imagen PNG o JPG en base64. Con '' se quita la foto que tuviera
     photo: Joi.string().max(PHOTO_MAX_LENGTH).pattern(PHOTO).allow('')
 };
+
+// Los criterios de una valoracion: entre 1 y 4, sin repetir el mismo criterio
+const reviewCriteria = Joi.array()
+    .items(
+        Joi.object({
+            criterion: Joi.string()
+                .valid(...REVIEW_CRITERIA)
+                .required(),
+            score: Joi.number().integer().min(SCORE_MIN).max(SCORE_MAX).required(),
+            met: Joi.boolean().required()
+        })
+    )
+    .min(1)
+    .max(REVIEW_CRITERIA.length)
+    .unique('criterion')
+    .example([
+        { criterion: 'conversation', score: 5, met: true },
+        { criterion: 'punctuality', score: 3, met: false }
+    ]);
 
 // Aqui tenemos todos los esquemas de validacion que utilizamos en la aplicacion
 export const Schemas = {
@@ -221,6 +250,40 @@ export const Schemas = {
         })
     },
 
+    // Validacion de los filtros del listado de valoraciones. Se pueden combinar todos en la misma peticion
+    reviewList: Joi.object<ReviewListQuery>({
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(5),
+
+        // Texto que se busca en el comentario
+        search: Joi.string().trim().max(100).allow('').default(''),
+
+        // Solo las valoraciones de este Date
+        date: Joi.string().regex(OBJECT_ID),
+
+        // Solo las que tienen una media igual o mayor
+        minScore: Joi.number().min(SCORE_MIN).max(SCORE_MAX)
+    }),
+
+    // Validaciones de las valoraciones de los Dates
+    review: {
+        // Al crear: el Date, los criterios, el comentario y si repetiria.
+        // author no esta en el esquema: sale del token. Si alguien lo envia, Joi lo rechaza (422)
+        create: Joi.object({
+            date: Joi.string().regex(OBJECT_ID).required().example('6ab3f2fe9c500204a7d5fa01'),
+            criteria: reviewCriteria.required(),
+            comment: Joi.string().trim().max(500).allow('').example('Muy buena conversación, repetiría.'),
+            wouldRepeat: Joi.boolean().required().example(true)
+        }),
+
+        // Al editar no se cambia el Date. Hay que enviar al menos un campo
+        update: Joi.object({
+            criteria: reviewCriteria,
+            comment: Joi.string().trim().max(500).allow(''),
+            wouldRepeat: Joi.boolean()
+        }).min(1)
+    },
+
     // Validaciones de los Dates
     date: {
         // Abrir un Date: los ids de los dos usuarios, distintos entre si
@@ -272,6 +335,19 @@ export const ValidateGradeList = (req: Request, res: Response, next: NextFunctio
 
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
+    }
+
+    res.locals.query = value;
+    next();
+};
+
+// Filtros del listado de valoraciones. Aqui una query que no vale responde 422 (no se puede procesar),
+// igual que un body que no cumple su esquema
+export const ValidateReviewList = (req: Request, res: Response, next: NextFunction) => {
+    const { error, value } = Schemas.reviewList.validate(req.query);
+
+    if (error) {
+        return res.status(422).json({ message: error.details[0].message });
     }
 
     res.locals.query = value;
