@@ -35,3 +35,18 @@ export type {
   StudateDate,
 } from './date.model';
 export { DATE_STATUS_LABELS } from './date.model';
+export type {
+  CreateReview,
+  CriterionScore,
+  CriterionStats,
+  Review,
+  ReviewCriterion,
+  ReviewDate,
+  ReviewFilters,
+  ReviewResponse,
+  ReviewsPage,
+  ReviewStats,
+  ReviewStatsResponse,
+  UpdateReview,
+} from './review.model';
+export { REVIEW_CRITERIA, REVIEW_CRITERIA_LABELS, REVIEW_SCORES } from './review.model';

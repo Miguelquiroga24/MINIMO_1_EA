@@ -26,6 +26,11 @@ export class DateService {
     return this.http.get<DatesPage>(this.baseUrl, { params });
   }
 
+  /** GET /dates/:id (un usuario normal, solo los suyos) */
+  getDate(id: string): Observable<DateResponse> {
+    return this.http.get<DateResponse>(`${this.baseUrl}/${id}`);
+  }
+
   /** POST /dates */
   createDate(payload: CreateDate): Observable<DateResponse> {
     return this.http.post<DateResponse>(this.baseUrl, payload);
