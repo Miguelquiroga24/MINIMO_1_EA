@@ -17,6 +17,8 @@ const { swagger: gradeInput } = j2s(Schemas.grade.create);
 const { swagger: gradeUpdateInput } = j2s(Schemas.grade.update);
 const { swagger: dateInput } = j2s(Schemas.date.create);
 const { swagger: dateUpdateInput } = j2s(Schemas.date.update);
+const { swagger: reviewInput } = j2s(Schemas.review.create);
+const { swagger: reviewUpdateInput } = j2s(Schemas.review.update);
 
 // Lo que devuelve la API no es igual a lo que se envía: lleva el _id y las fechas que
 // pone MongoDB, y el usuario nunca devuelve la contraseña.
@@ -131,6 +133,68 @@ const dateExample = {
     updatedAt: '2026-11-03T10:00:00.000Z'
 };
 
+// Una valoracion: date llega con sus dos usuarios y su estado, y author con sus datos (populate).
+// criteria es el vector de subdocumentos; average lo calcula el servidor
+const reviewSchema = {
+    type: 'object',
+    properties: {
+        ...storedFields,
+        date: {
+            type: 'object',
+            properties: {
+                _id: { type: 'string' },
+                users: { type: 'array', items: { type: 'object', properties: { _id: { type: 'string' }, name: { type: 'string' } } } },
+                status: { type: 'string', enum: ['pending', 'ongoing', 'closed'] }
+            }
+        },
+        author: userSummary,
+        criteria: {
+            type: 'array',
+            items: {
+                type: 'object',
+                properties: {
+                    criterion: { type: 'string', enum: ['conversation', 'punctuality', 'chemistry', 'sincerity'] },
+                    score: { type: 'integer', minimum: 1, maximum: 5 },
+                    met: { type: 'boolean' }
+                }
+            }
+        },
+        comment: { type: 'string', maxLength: 500 },
+        wouldRepeat: { type: 'boolean' },
+        average: { type: 'number', description: 'Media de los criterios, la calcula el servidor' }
+    }
+};
+
+const reviewExample = {
+    _id: '6ab3f2fe9c500204a7d5fb01',
+    date: { _id: dateExample._id, users: [{ _id: gradeExample.from._id, name: 'Laia Puig' }, { _id: gradeExample.to._id, name: 'Pau Ferrer' }], status: 'closed' },
+    author: gradeExample.from,
+    criteria: [
+        { criterion: 'conversation', score: 5, met: true },
+        { criterion: 'punctuality', score: 3, met: false },
+        { criterion: 'chemistry', score: 4, met: true }
+    ],
+    comment: 'Muy buena conversación, repetiría.',
+    wouldRepeat: true,
+    average: 4,
+    createdAt: '2026-11-04T10:00:00.000Z',
+    updatedAt: '2026-11-04T10:00:00.000Z'
+};
+
+const reviewStatsExample = {
+    date: dateExample._id,
+    total: 2,
+    average: 3.88,
+    min: 3.75,
+    max: 4,
+    wouldRepeat: 2,
+    criteria: [
+        { criterion: 'chemistry', average: 4, count: 2, met: 2 },
+        { criterion: 'conversation', average: 4.5, count: 2, met: 2 },
+        { criterion: 'punctuality', average: 3, count: 2, met: 0 }
+    ]
+};
+
 const swaggerPath = (filePath: string) => filePath.replace(/\\/g, '/');
 
 const swaggerDocument = swaggerJsdoc({
@@ -147,7 +211,8 @@ const swaggerDocument = swaggerJsdoc({
             { name: 'Auth', description: 'Registro, login, renovación del token y logout' },
             { name: 'Users', description: 'Usuarios: el de la sesión, con quién abrir un Date y la gestión de usuarios del backoffice (solo admin)' },
             { name: 'Grades', description: 'Votos de La Orla: A+ o F de un usuario a otro (solo admin)' },
-            { name: 'Dates', description: 'Citas entre dos usuarios que se han dado A+ (el admin ve todas; un usuario, las suyas)' }
+            { name: 'Dates', description: 'Citas entre dos usuarios que se han dado A+ (el admin ve todas; un usuario, las suyas)' },
+            { name: 'Reviews', description: 'Valoraciones de los Dates por criterios, y su resumen estadístico' }
         ],
         // Por defecto todas las rutas piden el token (el candado de Swagger).
         // Las rutas públicas lo quitan con security: [] en su comentario @openapi.
@@ -172,7 +237,10 @@ const swaggerDocument = swaggerJsdoc({
                 Grade: gradeSchema,
                 DateInput: dateInput,
                 DateUpdateInput: dateUpdateInput,
-                Date: dateSchema
+                Date: dateSchema,
+                ReviewInput: reviewInput,
+                ReviewUpdateInput: reviewUpdateInput,
+                Review: reviewSchema
             },
             responses: {
                 LoginOk: okResponse(
@@ -220,7 +288,29 @@ const swaggerDocument = swaggerJsdoc({
                     },
                     { dates: [dateExample], total: 4, page: 1, pages: 1 }
                 ),
-                AlreadyExtended: errorResponse('La prórroga solo se puede usar una vez', 'La prórroga de este Date ya se ha usado'),
+                ReviewOne: okResponse('Una valoración, con el Date y el autor', { type: 'object', properties: { review: reviewSchema } }, { review: reviewExample }),
+                ReviewList: okResponse(
+                    'Una página de valoraciones y los datos de paginación',
+                    {
+                        type: 'object',
+                        properties: {
+                            reviews: { type: 'array', items: reviewSchema },
+                            total: { type: 'integer', example: 3 },
+                            page: { type: 'integer', example: 1 },
+                            pages: { type: 'integer', example: 1 }
+                        }
+                    },
+                    { reviews: [reviewExample], total: 3, page: 1, pages: 1 }
+                ),
+                ReviewStats: okResponse('El resumen estadístico de las valoraciones de un Date', { type: 'object' }, { stats: reviewStatsExample }),
+                ReviewConflict: errorResponse(
+                    'El Date está pendiente ("No se puede valorar un Date pendiente") o ya lo has valorado',
+                    'Ya has valorado este Date'
+                ),
+                NotParticipant: errorResponse('Solo pueden valorar los dos usuarios del Date', 'Solo puedes valorar Dates en los que estés tú'),
+                NotOwner: errorResponse('Solo el autor de la valoración o un admin', 'Solo el autor o un admin pueden hacer esto'),
+                InvalidQuery: errorResponse('Los filtros de la URL no son válidos', '"minScore" must be less than or equal to 5'),
+                AlreadyExtended:errorResponse('La prórroga solo se puede usar una vez', 'La prórroga de este Date ya se ha usado'),
                 GradeConflict: errorResponse('Ese usuario ya ha votado ese perfil (para cambiar la nota, PUT)', 'Este usuario ya ha votado ese perfil'),
                 DateConflict: errorResponse('Ya hay un Date entre esos dos usuarios', 'Ya hay un Date entre estos dos usuarios'),
                 NotYourDate: errorResponse('Un usuario normal solo puede abrir Dates en los que está él', 'Solo puedes abrir Dates en los que estés tú'),
