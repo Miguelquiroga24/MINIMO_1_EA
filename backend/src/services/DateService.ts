@@ -1,5 +1,6 @@
 import DateModel, { DATE_DURATION_MS, DateStatus } from '../models/Date';
 import Grade from '../models/Grade';
+import Review from '../models/Review';
 import User, { AuthUser } from '../models/User';
 import type { DateListQuery } from '../middleware/Joi';
 
@@ -99,9 +100,16 @@ export const extendDate = async (dateId: string, requester: AuthUser) => {
     return { date: await date.populate(POPULATE_USERS) };
 };
 
-// Funcion que elimina un Date (borrado fisico). Solo la usa el admin
-export const deleteDate = (dateId: string) => {
-    return DateModel.findByIdAndDelete(dateId);
+// Funcion que elimina un Date (borrado fisico). Solo la usa el admin.
+// Con el Date se borran sus valoraciones: si no, quedarian valoraciones de un Date que ya no existe
+export const deleteDate = async (dateId: string) => {
+    const deleted = await DateModel.findByIdAndDelete(dateId);
+
+    if (deleted) {
+        await Review.deleteMany({ date: dateId });
+    }
+
+    return deleted;
 };
 
 // Funcion que abre un Date si dos usuarios se han dado A+ mutuamente. La llama GradeService cada vez

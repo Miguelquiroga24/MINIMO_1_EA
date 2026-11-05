@@ -1,5 +1,6 @@
 import DateModel from '../models/Date';
 import Grade from '../models/Grade';
+import Review from '../models/Review';
 import User, { IUser, UserRole } from '../models/User';
 import type { UserListQuery } from '../middleware/Joi';
 import { escapeRegExp } from '../utils/escape-regexp';
@@ -130,6 +131,11 @@ export const deleteUser = async (userId: string): Promise<DeleteUserResult> => {
     // Con el usuario se borran sus votos de La Orla (los que dio y los que recibio) y sus Dates: si no,
     // quedarian datos que apuntan a un usuario que ya no existe
     await Grade.deleteMany({ $or: [{ from: userId }, { to: userId }] });
+
+    // Las valoraciones que escribio y las de sus Dates (los Dates se borran justo despues)
+    const dateIds = await DateModel.find({ users: userId }).distinct('_id');
+    await Review.deleteMany({ $or: [{ author: userId }, { date: { $in: dateIds } }] });
+
     await DateModel.deleteMany({ users: userId });
     await User.deleteOne({ _id: userId });
 

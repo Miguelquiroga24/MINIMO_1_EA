@@ -1,4 +1,5 @@
 import { GradeValue } from './models/Grade';
+import { ICriterionScore } from './models/Review';
 import { IUser } from './models/User';
 
 // Datos de ejemplo para llenar la base de datos.
@@ -223,4 +224,50 @@ export const gradesSeed: GradeSeed[] = [
     { from: 'user@example.com', to: 'clara@example.com', value: 'F' },
     { from: 'user@example.com', to: 'laia@example.com', value: 'A+' },
     { from: 'marc@example.com', to: 'pau@example.com', value: 'F' }
+];
+
+// Valoraciones de ejemplo. Los Dates salen de los votos, asi que aqui no se sabe su id: date dice en que
+// Date va (el que el seed pasa a "En curso" o el "Cerrado") y author es la posicion del usuario en el Date
+export interface ReviewSeed {
+    date: 'ongoing' | 'closed';
+    author: 0 | 1;
+    criteria: ICriterionScore[];
+    comment: string;
+    wouldRepeat: boolean;
+}
+
+export const reviewsSeed: ReviewSeed[] = [
+    {
+        date: 'closed',
+        author: 0,
+        criteria: [
+            { criterion: 'conversation', score: 5, met: true },
+            { criterion: 'punctuality', score: 3, met: false },
+            { criterion: 'chemistry', score: 4, met: true }
+        ],
+        comment: 'Muy buena conversación, aunque llegó un poco tarde al café de la EETAC.',
+        wouldRepeat: true
+    },
+    {
+        date: 'closed',
+        author: 1,
+        criteria: [
+            { criterion: 'conversation', score: 4, met: true },
+            { criterion: 'punctuality', score: 5, met: true },
+            { criterion: 'chemistry', score: 3, met: false },
+            { criterion: 'sincerity', score: 4, met: true }
+        ],
+        comment: 'Simpático, pero no hubo mucha química.',
+        wouldRepeat: false
+    },
+    {
+        date: 'ongoing',
+        author: 0,
+        criteria: [
+            { criterion: 'conversation', score: 4, met: true },
+            { criterion: 'sincerity', score: 5, met: true }
+        ],
+        comment: 'De momento genial, hablamos todos los días.',
+        wouldRepeat: true
+    }
 ];

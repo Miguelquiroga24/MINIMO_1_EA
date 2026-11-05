@@ -3,8 +3,9 @@ import { config } from './config/config';
 import Logging from './library/Logging';
 import DateModel from './models/Date';
 import Grade from './models/Grade';
+import Review from './models/Review';
 import User from './models/User';
-import { gradesSeed, usersSeed } from './seed-data';
+import { gradesSeed, reviewsSeed, usersSeed } from './seed-data';
 import { openDateIfMutual } from './services/DateService';
 
 // Llena la base de datos con los datos de ejemplo de seed-data.ts.
@@ -26,7 +27,10 @@ const seed = async () => {
         const users = await User.deleteMany({});
         const grades = await Grade.deleteMany({});
         const dates = await DateModel.deleteMany({});
-        Logging.warning(`Borrados ${users.deletedCount} usuarios, ${grades.deletedCount} votos y ${dates.deletedCount} Dates`);
+        const reviews = await Review.deleteMany({});
+        Logging.warning(
+            `Borrados ${users.deletedCount} usuarios, ${grades.deletedCount} votos, ${dates.deletedCount} Dates y ${reviews.deletedCount} valoraciones`
+        );
     }
 
     const usersInDb = await User.countDocuments();
@@ -73,6 +77,27 @@ const seed = async () => {
     }
 
     Logging.info(`Dates abiertos: ${dates.length}`);
+
+    // Valoraciones de ejemplo: los dos usuarios del Date cerrado y uno del que esta en curso.
+    // Se crean con create() para que el hook calcule la media
+    if (dates.length >= 2) {
+        const [ongoing, closed] = dates;
+        const reviews = await Review.create(
+            reviewsSeed.map((review) => {
+                const date = review.date === 'closed' ? closed : ongoing;
+
+                // author es la posicion del usuario dentro del Date (0 o 1)
+                return {
+                    date: date._id,
+                    author: (date.users as mongoose.Types.ObjectId[])[review.author],
+                    criteria: review.criteria,
+                    comment: review.comment,
+                    wouldRepeat: review.wouldRepeat
+                };
+            })
+        );
+        Logging.info(`Valoraciones creadas: ${reviews.length}`);
+    }
 };
 
 seed()
